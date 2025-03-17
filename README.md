@@ -5,8 +5,6 @@
 ## Screenshots
 
 ![Grid System Screenshot](https://github.com/glitch-monk/threejs.floor.grid_template/blob/main/screen_shot.png)
-![Grid System Video](https://github.com/glitch-monk/threejs.floor.grid_template/blob/main/screen_shot.mov)
-*Interactive grid system with customizable parameters*
 
 ## Quick Start
 ```bash
