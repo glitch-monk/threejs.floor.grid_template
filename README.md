@@ -13,17 +13,19 @@ npm run dev   # Start dev server
 ```
 
 ## Stack
-- three.js ^0.162.0
+- three.js ^0.174.0 with WebGPU renderer
+- Three.js Shader Language (TSL) for shader creation
 - tweakpane ^4.0.5
 - vite ^5.1.4
 
 ## Features
 ```yaml
 Grid:
-  - Shader-based infinite grid with anti-aliasing
+  - TSL-based infinite grid with anti-aliasing
+  - WebGPU-accelerated rendering
   - Distance-based fading
   - Customizable scale/thickness/color
-  - Shader-based cross pattern overlay
+  - Line-based cross pattern overlay
   - Real-time parameter controls
 
 Controls:
@@ -49,21 +51,25 @@ Controls:
 ```
 src/
 ├── materials/
-│   └── shaders/      # GLSL shaders
-├── Camera.js         # Orbit controls
-├── Debug.js          # Tweakpane interface
-├── Floor.js          # Grid + cross system
-├── Object.js         # 3D object handling
-├── World.js          # Scene management
-└── main.js          # Entry point
+│   ├── MeshGridMaterial.js  # TSL-based grid material
+│   ├── MeshCrossMaterial.js # TSL-based cross material
+│   └── shaders/            # TSL shader components
+├── Camera.js               # Orbit controls
+├── Debug.js                # Tweakpane interface
+├── Floor.js                # Grid + cross system
+├── Object.js               # 3D object handling
+├── World.js                # Scene management
+└── main.js                # Entry point
 ```
 
 ## Performance
+- WebGPU rendering for modern GPUs
+- TSL (Three.js Shader Language) for efficient shader creation
 - Fixed pixel ratio
 - GPU-accelerated shader rendering
 - Derivative-based anti-aliasing
-- High-density cross support
-- Memory-efficient (single plane geometry)
+- High-density cross support with line-based rendering
+- Memory-efficient implementation
 - Based on Ben Golus's grid shader techniques
 
 ## License

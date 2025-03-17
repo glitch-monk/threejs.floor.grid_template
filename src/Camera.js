@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import * as THREE from 'three/webgpu';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export default class Camera {
     constructor(scene, renderer) {

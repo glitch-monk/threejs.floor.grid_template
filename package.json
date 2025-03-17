@@ -9,9 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.162.0",
-    "tweakpane": "^4.0.5",
-    "three.meshline": "^1.4.0"
+    "@types/three": "^0.174.0",
+    "three": "^0.174.0",
+    "three.meshline": "^1.4.0",
+    "tweakpane": "^4.0.5"
   },
   "devDependencies": {
     "vite": "^5.1.4"

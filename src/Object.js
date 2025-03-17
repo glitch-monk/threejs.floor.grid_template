@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 
 export default class Object3D {
     constructor(scene) {
@@ -15,7 +15,7 @@ export default class Object3D {
                 z: 0
             },
             scale: 0.2,
-            color: '#fffffff'
+            color: '#ffffff'
         };
         
         this.createObject();

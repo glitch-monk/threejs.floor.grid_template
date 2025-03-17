@@ -1,5 +1,5 @@
 import { Pane } from 'tweakpane';
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 
 export default class Debug {
     constructor() {

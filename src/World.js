@@ -1,26 +1,34 @@
-import * as THREE from 'three';
+import * as THREE from 'three/webgpu';
 import Camera from './Camera.js';
 import Floor from './Floor.js';
 import Debug from './Debug.js';
 import Object3D from './Object.js';
 
 export default class World {
+    static async create() {
+        const world = new World();
+        await world.init();
+        return world;
+    }
+
     constructor() {
-        console.log('Initializing World...');
-        
-        // Bind animate method
+        console.log('Creating World instance...');
         this.animate = this.animate.bind(this);
+    }
+
+    async init() {
+        console.log('Initializing World...');
         
         // Create scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x1b191f); // Dark background
         console.log('Scene created with background color:', this.scene.background);
         
-        // Create renderer
-        this.renderer = new THREE.WebGLRenderer({ 
-            antialias: true,
-            alpha: false
+        // Create and initialize WebGPU renderer
+        this.renderer = new THREE.WebGPURenderer({
+            forceWebGL: false
         });
+        await this.renderer.init();
         
         // Set renderer properties
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -84,6 +92,11 @@ export default class World {
             this.renderer.clear();
             
             // Render scene
+            console.log('Rendering scene with:', {
+                sceneChildren: this.scene.children.length,
+                cameraPosition: this.camera.instance.position.toArray(),
+                floorVisible: this.floor && this.floor.grid ? this.floor.grid.visible : 'Floor not initialized'
+            });
             this.renderer.render(this.scene, this.camera.instance);
             
             // Log first frame for debugging
@@ -101,6 +114,11 @@ export default class World {
             }
         } catch (error) {
             console.error('Error in animation loop:', error);
+            console.error('Error details:', error.message, error.stack);
+            console.error('Floor state:', this.floor);
+            if (this.floor && this.floor.grid) {
+                console.error('Grid material:', this.floor.grid.material);
+            }
         }
     }
 }
