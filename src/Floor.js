@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { gridVertexShader, gridFragmentShader } from './materials/shaders/gridShader.js';
+import { crossVertexShader, crossFragmentShader } from './materials/shaders/crossShader.js';
 
 export default class Floor {
     constructor(scene) {
@@ -7,16 +8,15 @@ export default class Floor {
         this.params = {
             grid: {
                 scale: 1,
-                thickness: 0.007,
-                offset: 0.000,
+                thickness: 2.0,
                 color: '#D3D3D3'
             },
             crosses: {
-                scale: 0.022,
-                offset: 1,
+                scale: 0.106,
+                offset: 0,
                 color: '#ff5f1f',
-                thickness: 0.028,
-                density: 45
+                thickness: 0.178,
+                density: 18
             }
         };
         this.createFloor();
@@ -26,41 +26,14 @@ export default class Floor {
         console.log('Creating floor...');
         
         try {
-            // Create grid material with custom shader for lines
             const gridMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     uGridColor: { value: new THREE.Color(this.params.grid.color) },
                     uGridThickness: { value: this.params.grid.thickness },
-                    uGridOffset: { value: this.params.grid.offset },
                     uGridScale: { value: this.params.grid.scale }
                 },
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform vec3 uGridColor;
-                    uniform float uGridThickness;
-                    uniform float uGridOffset;
-                    uniform float uGridScale;
-                    varying vec2 vUv;
-                    
-                    float getGrid(vec2 uv, float scale, float thickness, float offset) {
-                        vec2 grid = fract(uv * scale - offset);
-                        float lineX = abs(grid.x - 0.5);
-                        float lineY = abs(grid.y - 0.5);
-                        return smoothstep(thickness, 0.0, min(lineX, lineY));
-                    }
-                    
-                    void main() {
-                        vec2 scaledUv = vUv * 10.0;
-                        float grid = getGrid(scaledUv, uGridScale, uGridThickness, uGridOffset);
-                        gl_FragColor = vec4(uGridColor, grid);
-                    }
-                `,
+                vertexShader: gridVertexShader,
+                fragmentShader: gridFragmentShader,
                 transparent: true,
                 side: THREE.DoubleSide
             });
@@ -96,9 +69,6 @@ export default class Floor {
         if (params.thickness !== undefined) {
             material.uniforms.uGridThickness.value = params.thickness;
         }
-        if (params.offset !== undefined) {
-            material.uniforms.uGridOffset.value = params.offset;
-        }
         if (params.scale !== undefined) {
             material.uniforms.uGridScale.value = params.scale;
         }
@@ -108,14 +78,24 @@ export default class Floor {
         // Update local parameters
         Object.assign(this.params.crosses, params);
         
-        if (params.color !== undefined && this.crosses) {
-            this.crosses.material.color = new THREE.Color(params.color);
-            this.crosses.material.needsUpdate = true;
-        }
+        if (!this.crosses) return;
         
-        // Update crosses if needed
-        if (params.scale !== undefined || params.offset !== undefined || params.density !== undefined) {
-            this.updateCrosses();
+        const material = this.crosses.material;
+        if (params.color !== undefined) {
+            material.uniforms.uCrossColor.value = new THREE.Color(params.color);
+            material.needsUpdate = true;
+        }
+        if (params.thickness !== undefined) {
+            material.uniforms.uCrossThickness.value = params.thickness;
+        }
+        if (params.scale !== undefined) {
+            material.uniforms.uCrossScale.value = params.scale;
+        }
+        if (params.density !== undefined) {
+            material.uniforms.uCrossDensity.value = params.density;
+        }
+        if (params.offset !== undefined) {
+            material.uniforms.uCrossOffset.value = params.offset;
         }
     }
     
@@ -127,64 +107,26 @@ export default class Floor {
             this.crosses.material.dispose();
         }
         
-        // Create material for crosses
-        const material = new THREE.LineBasicMaterial({ 
-            color: new THREE.Color(this.params.crosses.color),
+        // Create cross material with shader
+        const crossMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uCrossColor: { value: new THREE.Color(this.params.crosses.color) },
+                uCrossThickness: { value: this.params.crosses.thickness },
+                uCrossScale: { value: this.params.crosses.scale },
+                uCrossDensity: { value: this.params.crosses.density },
+                uCrossOffset: { value: this.params.crosses.offset }
+            },
+            vertexShader: crossVertexShader,
+            fragmentShader: crossFragmentShader,
             transparent: true,
-            opacity: 0.8
+            side: THREE.DoubleSide
         });
         
-        // Create geometry for all crosses
-        const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        
-        // Calculate grid parameters based on the shader grid
-        const gridSize = 10; // Total size of the floor
-        const divisions = Math.floor(10 / this.params.grid.scale); // Match shader grid scale
-        const cellSize = gridSize / divisions;
-        const halfGridSize = gridSize / 2;
-        
-        // Calculate cross parameters
-        const crossSize = this.params.crosses.scale * cellSize * 0.5; // Scale relative to cell size
-        const density = Math.max(1, Math.floor(this.params.crosses.density));
-        const crossesPerCell = Math.ceil(Math.sqrt(density));
-        const crossSpacing = cellSize / crossesPerCell;
-        
-        // Create crosses for each grid cell
-        for (let x = -halfGridSize; x < halfGridSize; x += cellSize) {
-            for (let z = -halfGridSize; z < halfGridSize; z += cellSize) {
-                // Add crosses based on density
-                for (let dx = 0; dx < crossesPerCell; dx++) {
-                    for (let dz = 0; dz < crossesPerCell; dz++) {
-                        const crossX = x + (dx * crossSpacing) + crossSpacing/2 + (this.params.crosses.offset * crossSpacing);
-                        const crossZ = z + (dz * crossSpacing) + crossSpacing/2 + (this.params.crosses.offset * crossSpacing);
-                        
-                        // Add multiple parallel lines for thickness
-                        const numLines = 5; // Number of parallel lines for thickness
-                        const spacing = (this.params.crosses.thickness * cellSize * 0.1) / numLines;
-                        
-                        for (let i = -numLines/2; i < numLines/2; i++) {
-                            // Horizontal lines
-                            positions.push(
-                                crossX - crossSize, 0.002, crossZ + i * spacing,
-                                crossX + crossSize, 0.002, crossZ + i * spacing
-                            );
-                            
-                            // Vertical lines
-                            positions.push(
-                                crossX + i * spacing, 0.002, crossZ - crossSize,
-                                crossX + i * spacing, 0.002, crossZ + crossSize
-                            );
-                        }
-                    }
-                }
-            }
-        }
-        
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        
-        // Create and add crosses to scene
-        this.crosses = new THREE.LineSegments(geometry, material);
+        // Create plane for crosses
+        const geometry = new THREE.PlaneGeometry(10, 10);
+        this.crosses = new THREE.Mesh(geometry, crossMaterial);
+        this.crosses.rotation.x = -Math.PI / 2;
+        this.crosses.position.y = 0.001; // Slightly above the grid to avoid z-fighting
         this.scene.add(this.crosses);
     }
 }

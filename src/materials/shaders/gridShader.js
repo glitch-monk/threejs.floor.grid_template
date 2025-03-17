@@ -3,69 +3,52 @@
 
 export const gridVertexShader = `
 varying vec2 vUv;
-varying vec3 vPosition;
+varying vec3 vViewPosition;
 
 void main() {
     vUv = uv;
-    vPosition = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    vViewPosition = -mvPosition.xyz;
+    gl_Position = projectionMatrix * mvPosition;
 }
 `;
 
 export const gridFragmentShader = `
 uniform vec3 uGridColor;
-uniform vec3 uCrossColor;
-uniform float uLineWidth;
-uniform float uCrossWidth;
-uniform vec2 uResolution;
-
+uniform float uGridThickness;
+uniform float uGridScale;
 varying vec2 vUv;
-varying vec3 vPosition;
+varying vec3 vViewPosition;
 
-float getGrid(vec2 position, float width) {
-    vec2 grid = abs(fract(position - 0.5) - 0.5) / fwidth(position);
-    float line = min(grid.x, grid.y);
-    return 1.0 - min(line, 1.0);
-}
-
-float getCross(vec2 position, float width, float size) {
-    // Find the nearest grid intersection point
-    vec2 gp = floor(position) + 0.5;
+float getGrid(vec2 uv, float scale, float thickness) {
+    // Compute derivatives first to maintain precision
+    vec2 coord = uv * scale;
+    vec2 ddx = dFdx(coord);
+    vec2 ddy = dFdy(coord);
     
-    // Distance to the intersection point
-    float dist = distance(position, gp);
+    // Get grid lines using absolute value of position
+    vec2 grid = abs(fract(coord - 0.5) - 0.5);
     
-    // Only draw crosses near intersection points
-    if (dist > size) return 0.0;
+    // Compute anti-aliased lines using derivatives
+    vec2 fw = max(abs(ddx), abs(ddy)) * thickness;
+    vec2 lines = smoothstep(fw, vec2(0.0), grid);
     
-    // Calculate cross pattern
-    vec2 p = position - gp;
-    float crossPattern = min(
-        smoothstep(width * 0.5, 0.0, abs(p.x)),
-        smoothstep(width * 0.5, 0.0, abs(p.y))
-    );
-    
-    return crossPattern;
+    // Combine lines using max (OR) operation
+    return max(lines.x, lines.y);
 }
 
 void main() {
-    // Scale UVs to create grid cells
-    vec2 scaledUv = vPosition.xz * 0.1;
+    vec2 scaledUv = vUv * 10.0;
     
-    // Get grid lines
-    float gridLines = getGrid(scaledUv, uLineWidth);
+    // Fade grid based on distance using view position
+    float dist = length(vViewPosition);
+    float fade = 1.0 - smoothstep(20.0, 40.0, dist);
     
-    // Get crosses at intersections
-    float crosses = getCross(scaledUv, uCrossWidth, 0.05);
+    float grid = getGrid(scaledUv, uGridScale, uGridThickness);
     
-    // Background color
-    vec3 backgroundColor = vec3(0.1, 0.1, 0.12);
-    
-    // Combine grid and crosses
-    vec3 color = backgroundColor;
-    color = mix(color, uGridColor, gridLines * uLineWidth * 10.0);
-    color = mix(color, uCrossColor, crosses * uCrossWidth * 10.0);
-    
-    gl_FragColor = vec4(color, 1.0);
+    // Base color (black) with light grey lines
+    vec3 baseColor = vec3(0.0);
+    vec3 finalColor = mix(baseColor, uGridColor, grid * fade);
+    gl_FragColor = vec4(finalColor, 1.0);
 }
 `;

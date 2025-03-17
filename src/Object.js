@@ -15,7 +15,7 @@ export default class Object3D {
                 z: 0
             },
             scale: 0.2,
-            color: '#ff6b6b'
+            color: '#fffffff'
         };
         
         this.createObject();

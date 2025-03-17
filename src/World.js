@@ -66,77 +66,10 @@ export default class World {
     
     setupDebug() {
         // Setup grid and line controls
-        this.debug.setupGridControls(this.floor, this.floor);
+        this.debug.setupGridControls(this.floor);
         
-        try {
-            if (!this.debug.pane) return;
-            
-            // Setup object controls
-            const objectFolder = this.debug.pane.addFolder({ title: 'Object' });
-            
-            // Position controls
-            const posFolder = objectFolder.addFolder({ title: 'Position' });
-            posFolder.addBinding(this.object.params.position, 'x', {
-                min: -5,
-                max: 5,
-                step: 0.1,
-                label: 'X'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            posFolder.addBinding(this.object.params.position, 'y', {
-                min: 0,
-                max: 5,
-                step: 0.1,
-                label: 'Y'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            posFolder.addBinding(this.object.params.position, 'z', {
-                min: -5,
-                max: 5,
-                step: 0.1,
-                label: 'Z'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            // Rotation controls
-            const rotFolder = objectFolder.addFolder({ title: 'Rotation' });
-            rotFolder.addBinding(this.object.params.rotation, 'x', {
-                min: 0,
-                max: 360,
-                step: 1,
-                label: 'X'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            rotFolder.addBinding(this.object.params.rotation, 'y', {
-                min: 0,
-                max: 360,
-                step: 1,
-                label: 'Y'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            rotFolder.addBinding(this.object.params.rotation, 'z', {
-                min: 0,
-                max: 360,
-                step: 1,
-                label: 'Z'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            // Scale and color controls
-            objectFolder.addBinding(this.object.params, 'scale', {
-                min: 0.1,
-                max: 3,
-                step: 0.1,
-                label: 'SCALE'
-            }).on('change', ({ value }) => this.object.updateTransform());
-            
-            objectFolder.addBinding(this.object.params, 'color', {
-                view: 'color',
-                label: 'COLOR',
-                format: 'hex'
-            }).on('change', (ev) => this.object.updateParameters({ color: ev.value }));
-            
-        } catch (error) {
-            console.error('Failed to setup object controls:', error);
-        }
+        // Setup object controls
+        this.debug.setupObjectControls(this.object);
     }
     
     animate() {
