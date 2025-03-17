@@ -4,7 +4,7 @@
 
 ## Screenshots
 
-![Grid System Screenshot](./Screenshot%202025-03-17%20at%208.20.24%20AM.png)
+![Grid System Screenshot](https://github.com/glitch-monk/threejs.floor.grid_template/blob/main/screen_shot.png)
 
 *Interactive grid system with customizable parameters*
 
